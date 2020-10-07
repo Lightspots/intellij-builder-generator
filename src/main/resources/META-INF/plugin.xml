@@ -1,19 +1,29 @@
 <idea-plugin>
-    <id>com.github.grisu118.intellijbuildergenerator</id>
+    <id>ch.lightspots.it.intellij.plugin.generate.builder</id>
     <name>intellij-builder-generator</name>
-    <vendor>grisu118</vendor>
+    <vendor>Lightspots GmbH</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.grisu118.intellijbuildergenerator.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.grisu118.intellijbuildergenerator.services.MyProjectService"/>
+        <applicationService
+                serviceImplementation="ch.lightspots.it.intellij.plugin.generate.builder.services.MyApplicationService"/>
+        <projectService
+                serviceImplementation="ch.lightspots.it.intellij.plugin.generate.builder.services.MyProjectService"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.grisu118.intellijbuildergenerator.listeners.MyProjectManagerListener"
+        <listener class="ch.lightspots.it.intellij.plugin.generate.builder.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+    <actions>
+        <action id="lightspots.generate.builder"
+                class="ch.lightspots.it.intellij.plugin.generate.builder.actions.BuilderAction"
+                text="Builder..." description="${project.description}">
+            <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="DelegateMethods"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt B"/>
+        </action>
+    </actions>
 </idea-plugin>

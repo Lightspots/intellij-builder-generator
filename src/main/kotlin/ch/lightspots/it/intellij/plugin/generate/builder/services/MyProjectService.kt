@@ -1,7 +1,7 @@
-package com.github.grisu118.intellijbuildergenerator.services
+package ch.lightspots.it.intellij.plugin.generate.builder.services
 
+import ch.lightspots.it.intellij.plugin.generate.builder.MyBundle
 import com.intellij.openapi.project.Project
-import com.github.grisu118.intellijbuildergenerator.MyBundle
 
 class MyProjectService(project: Project) {
 

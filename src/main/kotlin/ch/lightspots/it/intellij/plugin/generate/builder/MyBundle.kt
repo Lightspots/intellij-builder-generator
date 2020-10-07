@@ -1,4 +1,4 @@
-package com.github.grisu118.intellijbuildergenerator
+package ch.lightspots.it.intellij.plugin.generate.builder
 
 import com.intellij.AbstractBundle
 import org.jetbrains.annotations.NonNls

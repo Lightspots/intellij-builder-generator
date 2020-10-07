@@ -1,8 +1,8 @@
-package com.github.grisu118.intellijbuildergenerator.listeners
+package ch.lightspots.it.intellij.plugin.generate.builder.listeners
 
+import ch.lightspots.it.intellij.plugin.generate.builder.services.MyProjectService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
-import com.github.grisu118.intellijbuildergenerator.services.MyProjectService
 
 internal class MyProjectManagerListener : ProjectManagerListener {
 
