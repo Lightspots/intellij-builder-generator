@@ -4,3 +4,7 @@
 formatting:
   Indentation:
     active: true
+
+style:
+  ReturnCount:
+    max: 5
