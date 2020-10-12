@@ -1,5 +1,8 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.java
 
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.canonicalEqual
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.private
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.public
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.sameAs
 import com.intellij.codeInsight.generation.PsiFieldMember
 import com.intellij.openapi.editor.Editor
@@ -26,19 +29,29 @@ class BuilderGenerator(
     private val psiElementFactory: PsiElementFactory = JavaPsiFacade.getInstance(project).elementFactory
     fun generate() {
         val builderClazz = findOrCreateBuilderClass()
-        val ctor = createConstructor(builderClazz)
 
-        addMethod(targetClazz, ctor, replace = true)
+        val ctor = createConstructor(builderClazz)
+        targetClazz.addMethod(ctor, replace = true)
+
+        var lastAddedMember: PsiElement? = null
+        for (member in selectedFields) {
+            lastAddedMember = builderClazz.findOrCreateField(member, lastAddedMember)
+        }
 
         val staticBuilderMethod = createStaticBuilderMethod(builderClazz)
-        addMethod(targetClazz, staticBuilderMethod)
+        targetClazz.addMethod(staticBuilderMethod)
 
         val builderCtor = createBuilderConstructor(builderClazz)
-        addMethod(builderClazz, builderCtor)
+        builderClazz.addMethod(builderCtor)
+
+        for (member in selectedFields) {
+            val method = builderClazz.createMethodForField(member, lastAddedMember)
+            lastAddedMember = builderClazz.addMethod(method, after = lastAddedMember)
+        }
 
         val buildMethod = createBuildMethod()
         // TODO add as last
-        addMethod(builderClazz, buildMethod, replace = true)
+        builderClazz.addMethod(buildMethod, replace = true, after = lastAddedMember)
 
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file)
         CodeStyleManager.getInstance(project).reformat(builderClazz)
@@ -55,10 +68,49 @@ class BuilderGenerator(
         return targetClazz.add(builderClazz) as PsiClass
     }
 
+    private fun PsiClass.findOrCreateField(member: PsiFieldMember, last: PsiElement? = null): PsiElement {
+        val field = member.element
+
+        val oldField = this.findFieldByName(field.name, false)
+        if (oldField == null || !field.type.canonicalEqual(oldField.type)) {
+            // remove oldField
+            oldField?.delete()
+
+            val newField = psiElementFactory.createField(field.name, field.type)
+
+            return if (last != null) {
+                addAfter(newField, last)
+            } else {
+                add(newField)
+            }
+        }
+        return oldField
+    }
+
+    private fun PsiClass.createMethodForField(member: PsiFieldMember, last: PsiElement? = null): PsiMethod {
+        val field = member.element
+
+        val methodName = field.name
+        val parameterName = field.name
+
+        val method = psiElementFactory.createMethod(methodName, psiElementFactory.createType(this))
+        method.public()
+
+        val parameter = psiElementFactory.createParameter(parameterName, field.type)
+        method.parameterList.add(parameter)
+
+        val assignText = "this.${field.name} = ${field.name};"
+        val returnText = "return this;"
+        method.body?.add(psiElementFactory.createStatementFromText(assignText, method))
+        method.body?.add(psiElementFactory.createStatementFromText(returnText, method))
+
+        return method
+    }
+
     private fun createConstructor(builderClazz: PsiClass): PsiMethod {
         val ctor = psiElementFactory.createConstructor(targetClazz.name!!)
         // set constructor private
-        ctor.modifierList.setModifierProperty(PsiModifier.PRIVATE, true)
+        ctor.private()
 
         ctor.parameterList.add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
 
@@ -122,16 +174,15 @@ class BuilderGenerator(
         return buildMethod
     }
 
-    private fun addMethod(
-        target: PsiClass,
+    private fun PsiClass.addMethod(
         method: PsiMethod,
         replace: Boolean = false,
         after: PsiElement? = null
     ): PsiElement {
-        var oldMethod = target.findMethodBySignature(method, false)
+        var oldMethod = findMethodBySignature(method, false)
         if (oldMethod == null && method.isConstructor) {
             // search for existing constructor
-            val ctor = target.constructors.find { it.parameterList sameAs method.parameterList }
+            val ctor = constructors.find { it.parameterList sameAs method.parameterList }
             if (ctor != null) {
                 oldMethod = ctor
             }
@@ -140,9 +191,9 @@ class BuilderGenerator(
         return if (oldMethod == null) {
             // add a new method
             if (after != null) {
-                target.addAfter(method, after)
+                addAfter(method, after)
             } else {
-                target.add(method)
+                add(method)
             }
         } else if (replace) {
             // replace method
