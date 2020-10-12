@@ -30,6 +30,16 @@ class BuilderGenerator(
 
         addMethod(targetClazz, ctor, replace = true)
 
+        val staticBuilderMethod = createStaticBuilderMethod(builderClazz)
+        addMethod(targetClazz, staticBuilderMethod)
+
+        val builderCtor = createBuilderConstructor(builderClazz)
+        addMethod(builderClazz, builderCtor)
+
+        val buildMethod = createBuildMethod()
+        // TODO add as last
+        addMethod(builderClazz, buildMethod, replace = true)
+
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file)
         CodeStyleManager.getInstance(project).reformat(builderClazz)
     }
@@ -42,8 +52,7 @@ class BuilderGenerator(
         PsiUtil.setModifierProperty(builderClazz, PsiModifier.STATIC, true)
         PsiUtil.setModifierProperty(builderClazz, PsiModifier.FINAL, true)
 
-        targetClazz.add(builderClazz)
-        return builderClazz
+        return targetClazz.add(builderClazz) as PsiClass
     }
 
     private fun createConstructor(builderClazz: PsiClass): PsiMethod {
@@ -53,7 +62,7 @@ class BuilderGenerator(
 
         ctor.parameterList.add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
 
-        // TODO support for requireNonNull for NotNull fields
+        // FEATURE support for requireNonNull for NotNull fields
         selectedFields.forEach { member ->
             val field = member.element
 
@@ -68,9 +77,49 @@ class BuilderGenerator(
                 "${setter.name}(builder.${field.name});"
             }
 
-            ctor.body?.add(psiElementFactory.createStatementFromText(text, targetClazz))
+            ctor.body?.add(psiElementFactory.createStatementFromText(text, ctor))
         }
         return ctor
+    }
+
+    private fun createStaticBuilderMethod(builderClazz: PsiClass): PsiMethod {
+        val builderType = psiElementFactory.createType(builderClazz)
+        val method = psiElementFactory.createMethod("builder", builderType)
+        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true)
+        PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true)
+
+        // FEATURE Add final fields here
+
+        val text = "return new ${builderType.presentableText}();"
+        method.body?.add(psiElementFactory.createStatementFromText(text, method))
+
+        return method
+    }
+
+    private fun createBuilderConstructor(builderClazz: PsiClass): PsiMethod {
+        val ctor = psiElementFactory.createConstructor(builderClazz.name!!)
+        // set constructor private
+        // TODO make public if no static builder method is generated
+        ctor.modifierList.setModifierProperty(PsiModifier.PRIVATE, true)
+
+        // FEATURE Add final fields here
+        // ctor.parameterList
+        //   .add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
+
+        ctor.body?.add(psiElementFactory.createCommentFromText("// Use static builder() method", ctor))
+
+        return ctor
+    }
+
+    private fun createBuildMethod(): PsiMethod {
+        val buildMethod = psiElementFactory.createMethod("build", psiElementFactory.createType(targetClazz))
+
+        PsiUtil.setModifierProperty(buildMethod, PsiModifier.PUBLIC, true)
+
+        val text = "return new ${targetClazz.name}(this);"
+        buildMethod.body?.add(psiElementFactory.createStatementFromText(text, buildMethod))
+
+        return buildMethod
     }
 
     private fun addMethod(
