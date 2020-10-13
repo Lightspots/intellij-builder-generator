@@ -1,7 +1,7 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.ext
 
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiUtil
@@ -30,5 +30,9 @@ fun PsiType?.canonicalEqual(other: PsiType?): Boolean {
     }
 }
 
-fun PsiMethod.public() = PsiUtil.setModifierProperty(this, PsiModifier.PUBLIC, true)
-fun PsiMethod.private() = PsiUtil.setModifierProperty(this, PsiModifier.PRIVATE, true)
+fun PsiModifierListOwner.modPublic() = PsiUtil.setModifierProperty(this, PsiModifier.PUBLIC, true)
+fun PsiModifierListOwner.modPrivate() = PsiUtil.setModifierProperty(this, PsiModifier.PRIVATE, true)
+fun PsiModifierListOwner.modStatic() = PsiUtil.setModifierProperty(this, PsiModifier.STATIC, true)
+fun PsiModifierListOwner.modFinal() = PsiUtil.setModifierProperty(this, PsiModifier.FINAL, true)
+
+fun PsiModifierListOwner.addAnnotation(qualifiedName: String) = this.modifierList?.addAnnotation(qualifiedName)

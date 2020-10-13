@@ -1,8 +1,11 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.java
 
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.addAnnotation
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.canonicalEqual
-import ch.lightspots.it.intellij.plugin.generate.builder.ext.private
-import ch.lightspots.it.intellij.plugin.generate.builder.ext.public
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.modFinal
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.modPrivate
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.modPublic
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.modStatic
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.sameAs
 import com.intellij.codeInsight.generation.PsiFieldMember
 import com.intellij.openapi.editor.Editor
@@ -17,7 +20,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PropertyUtil
-import com.intellij.psi.util.PsiUtil
 
 class BuilderGenerator(
     private val project: Project,
@@ -62,8 +64,8 @@ class BuilderGenerator(
 
     private fun createBuilderClass(): PsiClass {
         val builderClazz = psiElementFactory.createClass(Constants.BUILDER_CLASS_NAME)
-        PsiUtil.setModifierProperty(builderClazz, PsiModifier.STATIC, true)
-        PsiUtil.setModifierProperty(builderClazz, PsiModifier.FINAL, true)
+        builderClazz.modStatic()
+        builderClazz.modFinal()
 
         return targetClazz.add(builderClazz) as PsiClass
     }
@@ -94,9 +96,11 @@ class BuilderGenerator(
         val parameterName = field.name
 
         val method = psiElementFactory.createMethod(methodName, psiElementFactory.createType(this))
-        method.public()
+        method.modPublic()
+        method.addAnnotation(Constants.BERTSCHI_NON_NULL)
 
         val parameter = psiElementFactory.createParameter(parameterName, field.type)
+        parameter.addAnnotation(Constants.BERTSCHI_NON_NULL)
         method.parameterList.add(parameter)
 
         val assignText = "this.${field.name} = ${field.name};"
@@ -110,7 +114,7 @@ class BuilderGenerator(
     private fun createConstructor(builderClazz: PsiClass): PsiMethod {
         val ctor = psiElementFactory.createConstructor(targetClazz.name!!)
         // set constructor private
-        ctor.private()
+        ctor.modPrivate()
 
         ctor.parameterList.add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
 
@@ -137,8 +141,9 @@ class BuilderGenerator(
     private fun createStaticBuilderMethod(builderClazz: PsiClass): PsiMethod {
         val builderType = psiElementFactory.createType(builderClazz)
         val method = psiElementFactory.createMethod("builder", builderType)
-        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true)
-        PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true)
+        method.modStatic()
+        method.modPublic()
+        method.addAnnotation(Constants.BERTSCHI_NON_NULL)
 
         // FEATURE Add final fields here
 
@@ -152,7 +157,7 @@ class BuilderGenerator(
         val ctor = psiElementFactory.createConstructor(builderClazz.name!!)
         // set constructor private
         // TODO make public if no static builder method is generated
-        ctor.modifierList.setModifierProperty(PsiModifier.PRIVATE, true)
+        ctor.modPrivate()
 
         // FEATURE Add final fields here
         // ctor.parameterList
@@ -165,8 +170,8 @@ class BuilderGenerator(
 
     private fun createBuildMethod(): PsiMethod {
         val buildMethod = psiElementFactory.createMethod("build", psiElementFactory.createType(targetClazz))
-
-        PsiUtil.setModifierProperty(buildMethod, PsiModifier.PUBLIC, true)
+        buildMethod.modPublic()
+        buildMethod.addAnnotation(Constants.BERTSCHI_NON_NULL)
 
         val text = "return new ${targetClazz.name}(this);"
         buildMethod.body?.add(psiElementFactory.createStatementFromText(text, buildMethod))

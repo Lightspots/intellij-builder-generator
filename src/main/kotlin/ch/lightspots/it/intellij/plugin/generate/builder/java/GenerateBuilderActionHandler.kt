@@ -132,7 +132,7 @@ class GenerateBuilderActionHandler : CodeInsightActionHandler {
                 .filter { psiField ->
                     helper.isAccessible(psiField, classToExtract!!, clazz)
                     // TODO ignore fields with setters
-                    // TODO ignore if ancestor of element, se code above
+                    // TODO ignore if ancestor of element
                     // PsiTreeUtil.isAncestor()
                 }
                 .filterNot { PsiTreeUtil.isAncestor(it, element, false) }
