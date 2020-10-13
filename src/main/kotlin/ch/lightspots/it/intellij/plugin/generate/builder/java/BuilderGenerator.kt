@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PropertyUtil
@@ -29,10 +30,11 @@ class BuilderGenerator(
     private val selectedFields: List<PsiFieldMember>
 ) {
     private val psiElementFactory: PsiElementFactory = JavaPsiFacade.getInstance(project).elementFactory
+    private val builderType: PsiType = psiElementFactory.createTypeFromText(Constants.BUILDER_CLASS_NAME, null)
     fun generate() {
         val builderClazz = findOrCreateBuilderClass()
 
-        val ctor = createConstructor(builderClazz)
+        val ctor = createConstructor()
         targetClazz.addMethod(ctor, replace = true)
 
         var lastAddedMember: PsiElement? = null
@@ -40,20 +42,19 @@ class BuilderGenerator(
             lastAddedMember = builderClazz.findOrCreateField(member, lastAddedMember)
         }
 
-        val staticBuilderMethod = createStaticBuilderMethod(builderClazz)
+        val staticBuilderMethod = createStaticBuilderMethod()
         targetClazz.addMethod(staticBuilderMethod)
 
         val builderCtor = createBuilderConstructor(builderClazz)
         builderClazz.addMethod(builderCtor)
 
         for (member in selectedFields) {
-            val method = builderClazz.createMethodForField(member, lastAddedMember)
-            lastAddedMember = builderClazz.addMethod(method, after = lastAddedMember)
+            val method = createMethodForField(member)
+            builderClazz.addMethod(method)
         }
 
         val buildMethod = createBuildMethod()
-        // TODO add as last
-        builderClazz.addMethod(buildMethod, replace = true, after = lastAddedMember)
+        builderClazz.addMethod(buildMethod, replace = true)
 
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file)
         CodeStyleManager.getInstance(project).reformat(builderClazz)
@@ -89,13 +90,13 @@ class BuilderGenerator(
         return oldField
     }
 
-    private fun PsiClass.createMethodForField(member: PsiFieldMember, last: PsiElement? = null): PsiMethod {
+    private fun createMethodForField(member: PsiFieldMember): PsiMethod {
         val field = member.element
 
         val methodName = field.name
         val parameterName = field.name
 
-        val method = psiElementFactory.createMethod(methodName, psiElementFactory.createType(this))
+        val method = psiElementFactory.createMethod(methodName, builderType)
         method.modPublic()
         method.addAnnotation(Constants.BERTSCHI_NON_NULL)
 
@@ -111,12 +112,12 @@ class BuilderGenerator(
         return method
     }
 
-    private fun createConstructor(builderClazz: PsiClass): PsiMethod {
+    private fun createConstructor(): PsiMethod {
         val ctor = psiElementFactory.createConstructor(targetClazz.name!!)
         // set constructor private
         ctor.modPrivate()
 
-        ctor.parameterList.add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
+        ctor.parameterList.add(psiElementFactory.createParameter("builder", builderType))
 
         // FEATURE support for requireNonNull for NotNull fields
         selectedFields.forEach { member ->
@@ -138,8 +139,7 @@ class BuilderGenerator(
         return ctor
     }
 
-    private fun createStaticBuilderMethod(builderClazz: PsiClass): PsiMethod {
-        val builderType = psiElementFactory.createType(builderClazz)
+    private fun createStaticBuilderMethod(): PsiMethod {
         val method = psiElementFactory.createMethod("builder", builderType)
         method.modStatic()
         method.modPublic()
