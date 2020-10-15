@@ -41,8 +41,8 @@ repositories {
     jcenter()
 }
 dependencies {
-    kotlin("stdlib-jdk8")
-    kotlin("reflect")
+    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
 
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.13.1")
 }

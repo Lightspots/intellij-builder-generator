@@ -16,11 +16,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl.MemberChooserHeaderPanel
+import javax.swing.JCheckBox
 
 /**
  * @see org.jetbrains.java.generate.GenerateToStringActionHandlerImpl
@@ -61,30 +59,24 @@ class GenerateBuilderActionHandler : CodeInsightActionHandler {
 
         val dialogMembers = buildMembersToShow(clazz, element)
 
-        val header = MemberChooserHeaderPanel(clazz)
+        val options = arrayOf<JCheckBox>(
+            // TODO
+            JCheckBox("Test")
+        )
+
         logger.debug("Displaying member chooser dialog")
 
-        val chooser: MemberChooser<PsiFieldMember> = object : MemberChooser<PsiFieldMember>(
+        val chooser: MemberChooser<PsiFieldMember> = MemberChooser<PsiFieldMember>(
             dialogMembers,
             false,
             true,
             project,
-            PsiUtil.isLanguageLevel5OrHigher(clazz),
-            header
-        ) {
-            override fun getHelpId(): String {
-                return "editing.altInsert.tostring"
-            }
-
-            override fun isInsertOverrideAnnotationSelected(): Boolean {
-                return JavaCodeStyleSettings.getInstance(clazz.containingFile).INSERT_OVERRIDE_ANNOTATION
-            }
-        }
+            null,
+            options
+        )
         chooser.title = "Generate Builder"
 
-        chooser.setCopyJavadocVisible(false)
         chooser.selectElements(getPreselection(clazz, dialogMembers))
-        header.setChooser(chooser)
 
         if (ApplicationManager.getApplication().isUnitTestMode) {
             chooser.close(DialogWrapper.OK_EXIT_CODE)
