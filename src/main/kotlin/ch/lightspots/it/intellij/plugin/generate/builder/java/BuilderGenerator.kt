@@ -42,22 +42,24 @@ class BuilderGenerator(
             lastAddedMember = builderClazz.findOrCreateField(member, lastAddedMember)
         }
 
+        val lastFieldInClass = targetClazz.fields.last()
+
         val staticBuilderMethod = createStaticBuilderMethod()
-        targetClazz.addMethod(staticBuilderMethod)
+        targetClazz.addMethod(staticBuilderMethod, after = lastFieldInClass)
 
         val builderCtor = createBuilderConstructor(builderClazz)
-        builderClazz.addMethod(builderCtor)
+        lastAddedMember = builderClazz.addMethod(builderCtor, after = lastAddedMember)
 
         for (member in selectedFields) {
             val method = createMethodForField(member)
-            builderClazz.addMethod(method)
+            lastAddedMember = builderClazz.addMethod(method, after = lastAddedMember)
         }
 
         val buildMethod = createBuildMethod()
-        builderClazz.addMethod(buildMethod, replace = true)
+        builderClazz.addMethod(buildMethod, after = lastAddedMember, replace = true)
 
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file)
-        CodeStyleManager.getInstance(project).reformat(builderClazz)
+        CodeStyleManager.getInstance(project).reformat(file)
     }
 
     private fun findOrCreateBuilderClass(): PsiClass =
