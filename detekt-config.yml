@@ -3,6 +3,9 @@
 
 formatting:
   Indentation:
-    continuationIndentSize: 8
-  ParameterListWrapping:
-    indentSize: 8
+    active: true
+
+# custom config
+style:
+  ReturnCount:
+    max: 5
