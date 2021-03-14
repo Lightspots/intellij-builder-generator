@@ -8,17 +8,6 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <applicationService
-                serviceImplementation="ch.lightspots.it.intellij.plugin.generate.builder.services.MyApplicationService"/>
-        <projectService
-                serviceImplementation="ch.lightspots.it.intellij.plugin.generate.builder.services.MyProjectService"/>
-    </extensions>
-
-    <applicationListeners>
-        <listener class="ch.lightspots.it.intellij.plugin.generate.builder.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
     <actions>
         <action id="lightspots.generate.builder"
                 class="ch.lightspots.it.intellij.plugin.generate.builder.actions.BuilderAction"
