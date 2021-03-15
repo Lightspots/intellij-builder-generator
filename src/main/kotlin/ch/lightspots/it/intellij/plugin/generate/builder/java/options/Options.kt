@@ -1,7 +1,7 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.java.options
 
-import ch.lightspots.it.intellij.plugin.generate.builder.ext.getValue
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.getBoolean
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.getValue
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.setValue
 import com.intellij.ide.util.PropertiesComponent
 import javax.swing.JCheckBox
@@ -37,7 +37,6 @@ object Options {
                     updateProperty()
                 }
             })
-
         }
         val staticBuilderMethodCheckBox = JCheckBox("Generate static builder method").apply {
             isSelected = propertiesComponent.getBoolean(OptionProperty.STATIC_BUILDER_METHOD)
@@ -49,10 +48,14 @@ object Options {
 
         availableOptions = listOf(
             OptionEntry(OptionProperty.STATIC_BUILDER_METHOD, OptionType.CHECKBOX, staticBuilderMethodCheckBox),
-            OptionEntry(OptionProperty.STATIC_BUILDER_METHOD_NAME, OptionType.TEXT, JPanel().apply {
-                add(staticBuilderNameTextField)
-                add(JLabel("Name of static builder method"))
-            })
+            OptionEntry(
+                OptionProperty.STATIC_BUILDER_METHOD_NAME,
+                OptionType.TEXT,
+                JPanel().apply {
+                    add(staticBuilderNameTextField)
+                    add(JLabel("Name of static builder method"))
+                }
+            )
         )
     }
 }

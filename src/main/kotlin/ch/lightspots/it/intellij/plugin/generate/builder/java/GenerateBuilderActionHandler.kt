@@ -19,9 +19,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JTextField
 
 /**
  * @see org.jetbrains.java.generate.GenerateToStringActionHandlerImpl
