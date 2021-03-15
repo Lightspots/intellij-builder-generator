@@ -1,5 +1,6 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.java
 
+import ch.lightspots.it.intellij.plugin.generate.builder.java.options.Options
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.PsiFieldMember
@@ -19,6 +20,8 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
 import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JTextField
 
 /**
  * @see org.jetbrains.java.generate.GenerateToStringActionHandlerImpl
@@ -59,10 +62,7 @@ class GenerateBuilderActionHandler : CodeInsightActionHandler {
 
         val dialogMembers = buildMembersToShow(clazz, element)
 
-        val options = arrayOf<JCheckBox>(
-            // TODO
-            JCheckBox("Test")
-        )
+        val options = Options.availableOptions.map { it.component }.toTypedArray()
 
         logger.debug("Displaying member chooser dialog")
 
@@ -86,7 +86,6 @@ class GenerateBuilderActionHandler : CodeInsightActionHandler {
         if (DialogWrapper.OK_EXIT_CODE == chooser.exitCode) {
             val selectedMembers = chooser.selectedElements
             if (selectedMembers != null) {
-                println("Choosen members: $selectedMembers")
                 WriteCommandAction.runWriteCommandAction(project) {
                     BuilderGenerator(
                         project,

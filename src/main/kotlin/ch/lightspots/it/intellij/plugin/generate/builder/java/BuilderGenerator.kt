@@ -2,12 +2,16 @@ package ch.lightspots.it.intellij.plugin.generate.builder.java
 
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.addAnnotation
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.canonicalEqual
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.getBoolean
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.getValue
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modFinal
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modPrivate
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modPublic
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modStatic
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.sameAs
+import ch.lightspots.it.intellij.plugin.generate.builder.java.options.OptionProperty
 import com.intellij.codeInsight.generation.PsiFieldMember
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -31,6 +35,7 @@ class BuilderGenerator(
 ) {
     private val psiElementFactory: PsiElementFactory = JavaPsiFacade.getInstance(project).elementFactory
     private val builderType: PsiType = psiElementFactory.createTypeFromText(Constants.BUILDER_CLASS_NAME, null)
+    private val propertiesComponent = PropertiesComponent.getInstance()
     fun generate() {
         val builderClazz = findOrCreateBuilderClass()
 
@@ -44,10 +49,13 @@ class BuilderGenerator(
 
         val lastFieldInClass = targetClazz.fields.last()
 
-        val staticBuilderMethod = createStaticBuilderMethod()
-        targetClazz.addMethod(staticBuilderMethod, after = lastFieldInClass)
+        val useStaticBuilderMethod = propertiesComponent.getBoolean(OptionProperty.STATIC_BUILDER_METHOD)
+        if (useStaticBuilderMethod) {
+            val staticBuilderMethod = createStaticBuilderMethod()
+            targetClazz.addMethod(staticBuilderMethod, after = lastFieldInClass)
+        }
 
-        val builderCtor = createBuilderConstructor(builderClazz)
+        val builderCtor = createBuilderConstructor(builderClazz, useStaticBuilderMethod)
         lastAddedMember = builderClazz.addMethod(builderCtor, after = lastAddedMember)
 
         for (member in selectedFields) {
@@ -142,9 +150,11 @@ class BuilderGenerator(
     }
 
     private fun createStaticBuilderMethod(): PsiMethod {
-        val method = psiElementFactory.createMethod("builder", builderType)
+        val methodName = propertiesComponent.getValue(OptionProperty.STATIC_BUILDER_METHOD_NAME) ?: "builder"
+        val method = psiElementFactory.createMethod(methodName, builderType)
         method.modStatic()
         method.modPublic()
+        // TODO custom / optional annotation
         method.addAnnotation(Constants.BERTSCHI_NON_NULL)
 
         // FEATURE Add final fields here
@@ -155,17 +165,22 @@ class BuilderGenerator(
         return method
     }
 
-    private fun createBuilderConstructor(builderClazz: PsiClass): PsiMethod {
+    private fun createBuilderConstructor(builderClazz: PsiClass, useStaticBuilderMethod: Boolean): PsiMethod {
         val ctor = psiElementFactory.createConstructor(builderClazz.name!!)
-        // set constructor private
-        // TODO make public if no static builder method is generated
-        ctor.modPrivate()
+
+        if (useStaticBuilderMethod) {
+            // set constructor private if static builder method is generated
+            ctor.modPrivate()
+            val methodName = propertiesComponent.getValue(OptionProperty.STATIC_BUILDER_METHOD_NAME) ?: "builder"
+            ctor.body?.add(psiElementFactory.createCommentFromText("// Use static $methodName() method", ctor))
+        } else {
+            // set constructor public
+            ctor.modPublic()
+        }
 
         // FEATURE Add final fields here
         // ctor.parameterList
         //   .add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
-
-        ctor.body?.add(psiElementFactory.createCommentFromText("// Use static builder() method", ctor))
 
         return ctor
     }
