@@ -36,6 +36,7 @@ class BuilderGenerator(
     private val psiElementFactory: PsiElementFactory = JavaPsiFacade.getInstance(project).elementFactory
     private val builderType: PsiType = psiElementFactory.createTypeFromText(Constants.BUILDER_CLASS_NAME, null)
     private val propertiesComponent = PropertiesComponent.getInstance()
+
     fun generate() {
         val builderClazz = findOrCreateBuilderClass()
 

@@ -1,5 +1,7 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.java
 
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.debug
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.trace
 import ch.lightspots.it.intellij.plugin.generate.builder.java.options.Options
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.FileModificationService
@@ -46,16 +48,14 @@ class GenerateBuilderActionHandler : CodeInsightActionHandler {
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+        logger.trace { "invoke on file $file" }
         val (clazz, element) = getSubjectClass(editor, file) ?: return
 
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
             return
         }
-        logger.debug("+++ doExecuteAction - START +++")
 
-        if (logger.isDebugEnabled) {
-            logger.debug("Current project " + project.name)
-        }
+        logger.debug { "Current project ${project.name}" }
 
         val dialogMembers = buildMembersToShow(clazz, element)
 
@@ -95,7 +95,7 @@ class GenerateBuilderActionHandler : CodeInsightActionHandler {
             }
         }
 
-        logger.debug("+++ doExecuteAction - END +++")
+        logger.trace { "invoke finished" }
     }
 
     private fun getPreselection(
