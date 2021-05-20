@@ -25,6 +25,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PropertyUtil
+import java.util.Locale
 
 class BuilderGenerator(
     private val project: Project,
@@ -59,8 +60,9 @@ class BuilderGenerator(
         val builderCtor = createBuilderConstructor(builderClazz, useStaticBuilderMethod)
         lastAddedMember = builderClazz.addMethod(builderCtor, after = lastAddedMember)
 
+        val methodPrefix = propertiesComponent.getValue(OptionProperty.BUILDER_METHOD_PREFIX) ?: ""
         for (member in selectedFields) {
-            val method = createMethodForField(member)
+            val method = createMethodForField(member, methodPrefix)
             lastAddedMember = builderClazz.addMethod(method, after = lastAddedMember)
         }
 
@@ -101,10 +103,21 @@ class BuilderGenerator(
         return oldField
     }
 
-    private fun createMethodForField(member: PsiFieldMember): PsiMethod {
+    private fun createMethodForField(member: PsiFieldMember, prefix: String): PsiMethod {
         val field = member.element
 
-        val methodName = field.name
+        val methodName = if (prefix.isBlank()) {
+            field.name
+        } else {
+            "${prefix.trim()}${field.name.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(
+                    Locale.getDefault()
+                ) else {
+                    it.toString()
+                }
+            }}"
+        }
+
         val parameterName = field.name
 
         val method = psiElementFactory.createMethod(methodName, builderType)

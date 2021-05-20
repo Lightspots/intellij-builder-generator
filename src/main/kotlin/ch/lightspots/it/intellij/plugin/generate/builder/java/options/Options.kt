@@ -18,6 +18,7 @@ object Options {
 
     init {
         val staticBuilderNameTextField = JTextField("builder").apply {
+            isEnabled = propertiesComponent.getBoolean(OptionProperty.STATIC_BUILDER_METHOD)
             propertiesComponent.getValue(OptionProperty.STATIC_BUILDER_METHOD_NAME)?.let {
                 text = it
             }
@@ -46,6 +47,28 @@ object Options {
             }
         }
 
+        val builderMethodsPrefix = JTextField("").apply {
+            propertiesComponent.getValue(OptionProperty.BUILDER_METHOD_PREFIX)?.let {
+                text = it
+            }
+            val updateProperty = {
+                propertiesComponent.setValue(OptionProperty.BUILDER_METHOD_PREFIX, text)
+            }
+            document.addDocumentListener(object : DocumentListener {
+                override fun insertUpdate(e: DocumentEvent?) {
+                    updateProperty()
+                }
+
+                override fun removeUpdate(e: DocumentEvent?) {
+                    updateProperty()
+                }
+
+                override fun changedUpdate(e: DocumentEvent?) {
+                    updateProperty()
+                }
+            })
+        }
+
         availableOptions = listOf(
             OptionEntry(OptionProperty.STATIC_BUILDER_METHOD, OptionType.CHECKBOX, staticBuilderMethodCheckBox),
             OptionEntry(
@@ -54,6 +77,14 @@ object Options {
                 JPanel().apply {
                     add(staticBuilderNameTextField)
                     add(JLabel("Name of static builder method"))
+                }
+            ),
+            OptionEntry(
+                OptionProperty.BUILDER_METHOD_PREFIX,
+                OptionType.TEXT,
+                JPanel().apply {
+                    add(builderMethodsPrefix)
+                    add(JLabel("Prefix for builder methods (ex. with)"))
                 }
             )
         )
