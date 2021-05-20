@@ -10,5 +10,5 @@ enum class OptionProperty {
     private val prefix: String = "ch.lightspots.it.intellij.plugin.generate.builder"
 
     val string: String
-        get() = "${prefix}.${name.lowercase()}"
+        get() = "$prefix.${name.lowercase()}"
 }
