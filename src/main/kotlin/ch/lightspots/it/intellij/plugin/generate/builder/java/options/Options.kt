@@ -59,7 +59,7 @@ object Options {
                 OptionProperty.NULLABLE_ANNOTATION_NAME,
                 OptionType.TEXT,
                 labeledTextField(
-                    OptionProperty.NONNULL_ANNOTATION_NAME,
+                    OptionProperty.NULLABLE_ANNOTATION_NAME,
                     "",
                     "Full qualified Name to @Nullable Annotation"
                 )

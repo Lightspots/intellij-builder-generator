@@ -2,6 +2,8 @@ package ch.lightspots.it.intellij.plugin.generate.builder.java
 
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.addAnnotation
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.canonicalEqual
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.findGetterForField
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.findSetterForField
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.getBoolean
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.getValue
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modFinal
@@ -24,7 +26,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.util.PropertyUtil
 import java.util.Locale
 
 class BuilderGenerator(
@@ -37,6 +38,24 @@ class BuilderGenerator(
     private val psiElementFactory: PsiElementFactory = JavaPsiFacade.getInstance(project).elementFactory
     private val builderType: PsiType = psiElementFactory.createTypeFromText(Constants.BUILDER_CLASS_NAME, null)
     private val propertiesComponent = PropertiesComponent.getInstance()
+
+    private val nonNullAnnotation: String?
+    private val nullableAnnotation: String?
+
+    init {
+        val nonNullVal = propertiesComponent.getValue(OptionProperty.NONNULL_ANNOTATION_NAME)
+        nonNullAnnotation = if (nonNullVal.isNullOrBlank()) {
+            null
+        } else {
+            nonNullVal.trim()
+        }
+        val nullableVal = propertiesComponent.getValue(OptionProperty.NULLABLE_ANNOTATION_NAME)
+        nullableAnnotation = if (nullableVal.isNullOrBlank()) {
+            null
+        } else {
+            nullableVal.trim()
+        }
+    }
 
     fun generate() {
         val builderClazz = findOrCreateBuilderClass()
@@ -109,23 +128,30 @@ class BuilderGenerator(
         val methodName = if (prefix.isBlank()) {
             field.name
         } else {
-            "${prefix.trim()}${field.name.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(
-                    Locale.getDefault()
-                ) else {
-                    it.toString()
-                }
-            }}"
+            val capitalizedName = field.name.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase() else it.toString()
+            }
+            "${prefix.trim()}$capitalizedName"
         }
 
         val parameterName = field.name
 
         val method = psiElementFactory.createMethod(methodName, builderType)
         method.modPublic()
-        method.addAnnotation(Constants.BERTSCHI_NON_NULL)
+        nonNullAnnotation?.let { method.addAnnotation(it) }
 
         val parameter = psiElementFactory.createParameter(parameterName, field.type)
-        parameter.addAnnotation(Constants.BERTSCHI_NON_NULL)
+
+        val getter = targetClazz.findGetterForField(field)
+        if (nonNullAnnotation?.let { getter?.getAnnotation(it) != null || field.getAnnotation(it) != null } == true) {
+            parameter.addAnnotation(nonNullAnnotation)
+        } else if (
+            nullableAnnotation?.let {
+                getter?.getAnnotation(it) != null || field.getAnnotation(it) != null
+            } == true
+        ) {
+            parameter.addAnnotation(nullableAnnotation)
+        }
         method.parameterList.add(parameter)
 
         val assignText = "this.${field.name} = ${field.name};"
@@ -148,7 +174,7 @@ class BuilderGenerator(
             val field = member.element
 
             // search for setter for that field
-            val setter = targetClazz.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true)
+            val setter = targetClazz.findSetterForField(field)
 
             val isFinal = field.modifierList?.hasModifierProperty(PsiModifier.FINAL) ?: false
 
@@ -168,8 +194,7 @@ class BuilderGenerator(
         val method = psiElementFactory.createMethod(methodName, builderType)
         method.modStatic()
         method.modPublic()
-        // TODO custom / optional annotation
-        method.addAnnotation(Constants.BERTSCHI_NON_NULL)
+        nonNullAnnotation?.let { method.addAnnotation(it) }
 
         // FEATURE Add final fields here
 
@@ -202,7 +227,7 @@ class BuilderGenerator(
     private fun createBuildMethod(): PsiMethod {
         val buildMethod = psiElementFactory.createMethod("build", psiElementFactory.createType(targetClazz))
         buildMethod.modPublic()
-        buildMethod.addAnnotation(Constants.BERTSCHI_NON_NULL)
+        nonNullAnnotation?.let { buildMethod.addAnnotation(it) }
 
         val text = "return new ${targetClazz.name}(this);"
         buildMethod.body?.add(psiElementFactory.createStatementFromText(text, buildMethod))
