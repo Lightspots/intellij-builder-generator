@@ -26,7 +26,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import java.util.Locale
 
 class BuilderGenerator(
     private val project: Project,
