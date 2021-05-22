@@ -3,7 +3,7 @@
 
 formatting:
   Indentation:
-    active: false
+    active: true
 
 # custom config
 style:
