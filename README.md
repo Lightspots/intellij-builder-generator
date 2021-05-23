@@ -1,8 +1,8 @@
 # Intellij Builder Generator
 
 ![Build](https://github.com/Lightspots/intellij-builder-generator/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/16845.svg)](https://plugins.jetbrains.com/plugin/16845)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/16845.svg)](https://plugins.jetbrains.com/plugin/16845)
 
 <!-- Plugin description -->
 Plugin which adds a `Builder` action to the generation menu. The action generates a builder as inner class.

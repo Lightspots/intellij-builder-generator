@@ -6,6 +6,6 @@
 ### Added
 - Nothing
 
-## [0.0.1]
+## [0.0.1-eap]
 ### Added
 - Initial Release
