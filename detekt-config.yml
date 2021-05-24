@@ -9,3 +9,7 @@ formatting:
 style:
   ReturnCount:
     max: 5
+
+complexity:
+  TooManyFunctions:
+    active: false

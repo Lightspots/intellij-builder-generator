@@ -1,7 +1,9 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.ext
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameterList
@@ -42,5 +44,35 @@ fun PsiModifierListOwner.addAnnotation(qualifiedName: String) = this.modifierLis
 
 fun PsiClass.findSetterForField(field: PsiField) =
     findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true)
+
 fun PsiClass.findGetterForField(field: PsiField) =
     findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true)
+
+fun PsiClass.addMethod(
+    method: PsiMethod,
+    replace: Boolean = false,
+    after: PsiElement? = null
+): PsiElement {
+    var oldMethod = findMethodBySignature(method, false)
+    if (oldMethod == null && method.isConstructor) {
+        // search for existing constructor
+        val ctor = constructors.find { it.parameterList sameAs method.parameterList }
+        if (ctor != null) {
+            oldMethod = ctor
+        }
+    }
+
+    return if (oldMethod == null) {
+        // add a new method
+        if (after != null) {
+            addAfter(method, after)
+        } else {
+            add(method)
+        }
+    } else if (replace) {
+        // replace method
+        oldMethod.replace(method)
+    } else {
+        oldMethod
+    }
+}

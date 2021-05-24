@@ -1,6 +1,7 @@
 package ch.lightspots.it.intellij.plugin.generate.builder.java
 
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.addAnnotation
+import ch.lightspots.it.intellij.plugin.generate.builder.ext.addMethod
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.canonicalEqual
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.findGetterForField
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.findSetterForField
@@ -10,7 +11,6 @@ import ch.lightspots.it.intellij.plugin.generate.builder.ext.modFinal
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modPrivate
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modPublic
 import ch.lightspots.it.intellij.plugin.generate.builder.ext.modStatic
-import ch.lightspots.it.intellij.plugin.generate.builder.ext.sameAs
 import ch.lightspots.it.intellij.plugin.generate.builder.java.options.OptionProperty
 import com.intellij.codeInsight.generation.PsiFieldMember
 import com.intellij.ide.util.PropertiesComponent
@@ -69,14 +69,24 @@ class BuilderGenerator(
 
         val lastFieldInClass = targetClazz.fields.last()
 
+        val copyBuilder = propertiesComponent.getBoolean(OptionProperty.COPY_BUILDER)
         val useStaticBuilderMethod = propertiesComponent.getBoolean(OptionProperty.STATIC_BUILDER_METHOD)
         if (useStaticBuilderMethod) {
             val staticBuilderMethod = createStaticBuilderMethod()
-            targetClazz.addMethod(staticBuilderMethod, after = lastFieldInClass)
+            val addedMethod = targetClazz.addMethod(staticBuilderMethod, after = lastFieldInClass)
+            if (copyBuilder) {
+                val staticCopyBuilderMethod = createStaticCopyBuilderMethod()
+                targetClazz.addMethod(staticCopyBuilderMethod, after = addedMethod)
+            }
         }
 
         val builderCtor = createBuilderConstructor(builderClazz, useStaticBuilderMethod)
         lastAddedMember = builderClazz.addMethod(builderCtor, after = lastAddedMember)
+
+        if (copyBuilder) {
+            val copyCtor = createCopyBuilderConstructor(builderClazz, useStaticBuilderMethod)
+            lastAddedMember = builderClazz.addMethod(copyCtor, after = lastAddedMember)
+        }
 
         val methodPrefix = propertiesComponent.getValue(OptionProperty.BUILDER_METHOD_PREFIX) ?: ""
         for (member in selectedFields) {
@@ -203,6 +213,26 @@ class BuilderGenerator(
         return method
     }
 
+    private fun createStaticCopyBuilderMethod(): PsiMethod {
+        val methodName = propertiesComponent.getValue(OptionProperty.STATIC_BUILDER_METHOD_NAME) ?: "builder"
+        val method = psiElementFactory.createMethod(methodName, builderType)
+        method.modStatic()
+        method.modPublic()
+        val param = psiElementFactory.createParameter("object", psiElementFactory.createType(targetClazz))
+        nonNullAnnotation?.let {
+            method.addAnnotation(it)
+            param.addAnnotation(it)
+        }
+        method.parameterList.add(param)
+
+        // FEATURE Add final fields here
+
+        val text = "return new ${builderType.presentableText}(object);"
+        method.body?.add(psiElementFactory.createStatementFromText(text, method))
+
+        return method
+    }
+
     private fun createBuilderConstructor(builderClazz: PsiClass, useStaticBuilderMethod: Boolean): PsiMethod {
         val ctor = psiElementFactory.createConstructor(builderClazz.name!!)
 
@@ -223,6 +253,33 @@ class BuilderGenerator(
         return ctor
     }
 
+    private fun createCopyBuilderConstructor(builderClazz: PsiClass, useStaticBuilderMethod: Boolean): PsiMethod {
+        val ctor = psiElementFactory.createConstructor(builderClazz.name!!)
+
+        ctor.parameterList.add(psiElementFactory.createParameter("object", psiElementFactory.createType(targetClazz)))
+
+        if (useStaticBuilderMethod) {
+            // set constructor private if static builder method is generated
+            ctor.modPrivate()
+            val methodName = propertiesComponent.getValue(OptionProperty.STATIC_BUILDER_METHOD_NAME) ?: "builder"
+            ctor.body?.add(psiElementFactory.createCommentFromText("// Use static $methodName() method", ctor))
+        } else {
+            // set constructor public
+            ctor.modPublic()
+        }
+        // copy fields from object
+        for (member in selectedFields) {
+            val field = member.element
+            ctor.body?.add(psiElementFactory.createStatementFromText("${field.name} = object.${field.name};", ctor))
+        }
+
+        // FEATURE Add final fields here
+        // ctor.parameterList
+        //   .add(psiElementFactory.createParameter("builder", psiElementFactory.createType(builderClazz)))
+
+        return ctor
+    }
+
     private fun createBuildMethod(): PsiMethod {
         val buildMethod = psiElementFactory.createMethod("build", psiElementFactory.createType(targetClazz))
         buildMethod.modPublic()
@@ -232,34 +289,5 @@ class BuilderGenerator(
         buildMethod.body?.add(psiElementFactory.createStatementFromText(text, buildMethod))
 
         return buildMethod
-    }
-
-    private fun PsiClass.addMethod(
-        method: PsiMethod,
-        replace: Boolean = false,
-        after: PsiElement? = null
-    ): PsiElement {
-        var oldMethod = findMethodBySignature(method, false)
-        if (oldMethod == null && method.isConstructor) {
-            // search for existing constructor
-            val ctor = constructors.find { it.parameterList sameAs method.parameterList }
-            if (ctor != null) {
-                oldMethod = ctor
-            }
-        }
-
-        return if (oldMethod == null) {
-            // add a new method
-            if (after != null) {
-                addAfter(method, after)
-            } else {
-                add(method)
-            }
-        } else if (replace) {
-            // replace method
-            oldMethod.replace(method)
-        } else {
-            oldMethod
-        }
     }
 }
