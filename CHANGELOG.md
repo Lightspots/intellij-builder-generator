@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 ### Added
-- Nothing
+- Optional Copy Builder Generation
 
 ## [0.0.1-eap]
 ### Added

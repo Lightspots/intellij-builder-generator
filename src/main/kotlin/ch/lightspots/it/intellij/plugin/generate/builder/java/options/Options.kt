@@ -47,6 +47,11 @@ object Options {
                 labeledTextField(OptionProperty.BUILDER_METHOD_PREFIX, "", "Prefix for builder methods (ex. with)")
             ),
             OptionEntry(
+                OptionProperty.COPY_BUILDER,
+                OptionType.CHECKBOX,
+                optionLine(checkBox("Generate copy builder", OptionProperty.COPY_BUILDER))
+            ),
+            OptionEntry(
                 OptionProperty.NONNULL_ANNOTATION_NAME,
                 OptionType.TEXT,
                 labeledTextField(
@@ -114,6 +119,15 @@ object Options {
         }
         textField.apply()
         return textField
+    }
+
+    private fun checkBox(label: String, optionProperty: OptionProperty): JCheckBox {
+        return JCheckBox(label).apply {
+            isSelected = propertiesComponent.getBoolean(optionProperty)
+            addActionListener {
+                propertiesComponent.setValue(optionProperty, isSelected)
+            }
+        }
     }
 }
 
