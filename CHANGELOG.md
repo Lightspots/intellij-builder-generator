@@ -3,6 +3,7 @@
 # Intellij Builder Generator Changelog
 
 ## [Unreleased]
+## [0.0.2-eap]
 ### Added
 - Optional Copy Builder Generation
 
