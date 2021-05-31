@@ -178,7 +178,8 @@ class BuilderGenerator(
 
         ctor.parameterList.add(psiElementFactory.createParameter("builder", builderType))
 
-        // FEATURE support for requireNonNull for NotNull fields
+        val addRequireNonNull = propertiesComponent.getBoolean(OptionProperty.REQUIRE_NONNULL)
+
         selectedFields.forEach { member ->
             val field = member.element
 
@@ -187,10 +188,18 @@ class BuilderGenerator(
 
             val isFinal = field.modifierList?.hasModifierProperty(PsiModifier.FINAL) ?: false
 
+            var fieldAccess = "builder.${field.name}"
+            val getter = targetClazz.findGetterForField(field)
+            val nonNullAnnotationPresent = nonNullAnnotation?.let {
+                getter?.getAnnotation(it) != null || field.getAnnotation(it) != null
+            } == true
+            if (addRequireNonNull && nonNullAnnotationPresent) {
+                fieldAccess = "java.util.Objects.requireNonNull($fieldAccess)"
+            }
             val text = if (setter == null || isFinal) {
-                "${field.name} = builder.${field.name};"
+                "${field.name} = $fieldAccess;"
             } else {
-                "${setter.name}(builder.${field.name});"
+                "${setter.name}($fieldAccess);"
             }
 
             ctor.body?.add(psiElementFactory.createStatementFromText(text, ctor))

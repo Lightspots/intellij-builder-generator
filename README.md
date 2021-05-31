@@ -8,41 +8,49 @@
 Plugin which adds a `Builder` action to the generation menu. The action generates a builder as inner class.
 
 ````java
+import java.util.Objects;
+
 public class TestDto {
-    private final String field1;
-    private final String field2;
+  @Nullable
+  private final String field1;
+  @NonNull
+  private final String field2;
 
-    private TestDto(Builder builder) {
-        field1 = builder.field1;
-        field2 = builder.field2;
+  private TestDto(Builder builder) {
+    this.field1 = builder.field1;
+    this.field2 = Objects.requireNonNull(builder.field2);
+  }
+
+  @NonNull
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static final class Builder {
+    private String field1;
+    private String field2;
+
+    private Builder() {
+      // use static builder method
     }
 
-    public static Builder builder() {
-        return new Builder();
+    @NonNull
+    public Builder field1(@Nullable String field1) {
+      this.field1 = field1;
+      return this;
     }
 
-    public static final class Builder {
-        private String field1;
-        private String field2;
-
-        private Builder() {
-            // use static builder method
-        }
-
-        public Builder field1(String val) {
-            field1 = val;
-            return this;
-        }
-
-        public Builder field2(String val) {
-            field2 = val;
-            return this;
-        }
-
-        public TestDto build() {
-            return new TestDto(this);
-        }
+    @NonNull
+    public Builder field2(@NonNull String field2) {
+      this.field2 = field2;
+      return this;
     }
+
+    @NonNull
+    public TestDto build() {
+      return new TestDto(this);
+    }
+  }
 }
 ````
 
@@ -53,6 +61,7 @@ public class TestDto {
 * Custom prefix for the builder methods
 * Infer nullable / nonNull annotations from field / getters
     * Currently, it is necessary to manually configure the fully qualified class name of the used annotations
+* Add requireNonNull for fields (or getters) marked with `@NonNull` annotation
 
 ## Usage
 
