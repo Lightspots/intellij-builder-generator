@@ -6,6 +6,7 @@ enum class OptionProperty {
     BUILDER_METHOD_PREFIX,
     NULLABLE_ANNOTATION_NAME,
     NONNULL_ANNOTATION_NAME,
+    REQUIRE_NONNULL,
     COPY_BUILDER;
 
     private val prefix: String = "ch.lightspots.it.intellij.plugin.generate.builder"

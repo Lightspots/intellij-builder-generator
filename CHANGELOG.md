@@ -5,6 +5,7 @@
 ## [Unreleased]
 ### Added
 - Support for 2021.2
+- Support for generation of Objects.requireNonNull
 
 ## [0.0.2-eap]
 ### Added

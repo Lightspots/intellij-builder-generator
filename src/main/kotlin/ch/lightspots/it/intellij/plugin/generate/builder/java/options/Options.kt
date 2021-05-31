@@ -68,6 +68,11 @@ object Options {
                     "",
                     "Full qualified Name to @Nullable Annotation"
                 )
+            ),
+            OptionEntry(
+                OptionProperty.REQUIRE_NONNULL,
+                OptionType.CHECKBOX,
+                optionLine(checkBox("Add requireNonNull", OptionProperty.REQUIRE_NONNULL))
             )
         )
     }
