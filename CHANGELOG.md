@@ -3,6 +3,7 @@
 # Intellij Builder Generator Changelog
 
 ## [Unreleased]
+## [0.1.0]
 ### Added
 - Support for 2021.2
 - Support for generation of Objects.requireNonNull
