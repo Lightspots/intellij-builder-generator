@@ -3,6 +3,12 @@
 # Intellij Builder Generator Changelog
 
 ## [Unreleased]
+### Added
+- Support for 2021.3
+
+### Dependencies
+- Update kotlin to 1.5.31
+
 ## [0.1.0]
 ### Added
 - Support for 2021.2
