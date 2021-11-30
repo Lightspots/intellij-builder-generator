@@ -6,6 +6,10 @@
 
 ## [0.1.1]
 ### Added
+- Support for 2021.3
+
+### Dependencies
+- Update kotlin to 1.6.0
 
 ## [0.1.0]
 ### Added
