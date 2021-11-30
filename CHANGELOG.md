@@ -3,6 +3,8 @@
 # Intellij Builder Generator Changelog
 
 ## [Unreleased]
+
+## [0.1.1]
 ### Added
 - Support for 2021.3
 
