@@ -6,6 +6,9 @@
 
 ## [0.1.2]
 ### Added
+- Support for 2022.x
+### Dependencies
+- Update kotlin to 1.6.20
 
 ## [0.1.1]
 ### Added
