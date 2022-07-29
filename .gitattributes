@@ -1,0 +1,4 @@
+# shell scripts
+*.bat              eol=crlf
+*.sh               text eol=lf
+gradlew            text eol=lf
