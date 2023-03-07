@@ -3,6 +3,7 @@
 # Intellij Builder Generator Changelog
 
 ## [Unreleased]
+- Support for 2023.1
 
 ## [0.1.3]
 - Support for 2022.2 & 2022.3
