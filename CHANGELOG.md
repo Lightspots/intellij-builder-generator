@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Support for 2024.1
+
 ## 0.1.6 - 2023-12-08
 
 - Support for 2023.3
